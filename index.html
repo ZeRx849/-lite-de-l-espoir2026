@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نخبة الأمل | بوابة الإدارة والجمهور</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Elite of Hope - Design System 2026
+           Author: Dhr Irguedi 
+        */
+        :root {
+            --primary: #1a535c;
+            --secondary: #4ecdc4;
+            --accent: #ff6b6b;
+            --gold: #c5a059;
+            --light-bg: #f7f9fc;
+            --card-white: #ffffff;
+            --text-dark: #2f3e46;
+            --text-gray: #6d6d6d;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow-soft: 0 10px 25px rgba(0,0,0,0.05);
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        /* Dark/Royal Theme Modifications */
+        body.theme-royal { 
+            --primary: #d4af37; --light-bg: #0f0f0f; --card-white: #1a1a1a; 
+            --text-dark: #f1f1f1; --text-gray: #a0a0a0; 
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            direction: rtl;
+            transition: background 0.3s ease;
+        }
+
+        /* Slim Header Layout */
+        header {
+            background: var(--card-white);
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .logo-box {
+            position: relative;
+            width: 55px;
+            height: 55px;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--primary), var(--gold));
+            border-radius: 12px;
+        }
+
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1.5px solid var(--card-white);
+        }
+
+        .brand-text h1 {
+            font-family: 'Amiri', serif;
+            font-size: 1.4rem;
+            margin: 0;
+            line-height: 1;
+            background: linear-gradient(90deg, var(--primary), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text span {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-gray);
+            letter-spacing: 1.5px;
+            display: block;
+        }
+
+        #ad-carousel {
+            width: 100%;
+            max-width: 600px;
+            height: 70px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 2px 0;
+            scrollbar-width: none;
+        }
+        #ad-carousel::-webkit-scrollbar { display: none; }
+
+        .ad-item {
+            flex: 0 0 90%;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .ad-item img { width: 100%; height: 100%; object-fit: cover; }
+        .ad-overlay {
+            position: absolute; bottom: 0; right: 0; left: 0;
+            background: rgba(0,0,0,0.4); color: white;
+            font-size: 0.6rem; padding: 2px 10px;
+        }
+
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-white);
+            height: 65px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
+            z-index: 1001;
+            border-radius: 20px 20px 0 0;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-gray);
+            font-size: 0.7rem;
+            font-weight: 700;
+            transition: var(--transition);
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .tab-item.active { color: var(--primary); transform: translateY(-3px); }
+        .tab-item svg { width: 22px; height: 22px; margin-bottom: 3px; fill: currentColor; }
+
+        .container {
+            padding: 20px 15px 90px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page-section { display: none; animation: fadeInUp 0.5s ease forwards; }
+        .page-section.active { display: block; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modern-card {
+            background: var(--card-white);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(0,0,0,0.03);
+            position: relative;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-right: 10px;
+            border-right: 4px solid var(--primary);
+        }
+
+        .section-heading h2 {
+            margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--primary);
+        }
+
+        .post-content h3 { margin: 0 0 10px; font-size: 1.1rem; }
+        .post-content p { color: var(--text-gray); font-size: 0.9rem; margin-bottom: 12px; line-height: 1.5; }
+        .post-image { width: 100%; border-radius: 10px; margin-bottom: 10px; display: block; }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .student-profile {
+            background: var(--card-white);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .profile-img {
+            width: 70px; height: 70px; border-radius: 50%;
+            border: 2px solid var(--gold); padding: 2px;
+            object-fit: cover; margin-bottom: 8px;
+        }
+
+        .student-name { font-weight: 700; font-size: 0.85rem; display: block; }
+        .student-lvl { font-size: 0.75rem; color: var(--text-gray); }
+
+        .admin-form-box {
+            background: #fdfdfd;
+            border: 2px dashed #ddd;
+            padding: 15px;
+            border-radius: var(--radius-md);
+            margin-bottom: 25px;
+        }
+
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 5px; }
+        
+        input, textarea, select {
+            width: 100%; padding: 12px; border: 1px solid #e1e1e1;
+            border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+            background: #fff; color: #333;
+        }
+
+        .btn {
+            padding: 12px 20px; border: none; border-radius: 8px;
+            font-weight: 700; cursor: pointer; transition: var(--transition);
+            font-family: inherit; display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; width: 100%;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-gold { background: var(--gold); color: white; }
+        .btn-danger { background: #e74c3c; color: white; padding: 6px 12px; font-size: 0.75rem; }
+        .btn-edit { background: #3498db; color: white; padding: 6px 12px; font-size: 0.75rem; }
+
+        .admin-actions {
+            display: flex; gap: 8px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;
+        }
+
+        .signature {
+            text-align: center; padding: 30px 0; font-weight: 900;
+            font-size: 0.8rem; color: var(--gold); letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        #global-loader {
+            position: fixed; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--gold); width: 0; transition: width 0.3s; z-index: 2000;
+        }
+
+        @media (max-width: 480px) {
+            .student-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="global-loader"></div>
+
+<header>
+    <div class="header-top">
+        <div class="logo-box">
+            <img src="123.jpg" alt="نخبة الأمل">
+        </div>
+        <div class="brand-text">
+            <h1>نخبة الأمل</h1>
+            <span>ÉLITE DE L'ESPOIR</span>
+        </div>
+    </div>
+    
+    <div id="ad-carousel"></div>
+</header>
+
+<div class="container">
+    
+    <section id="sec-news" class="page-section active">
+        <div id="info-board" class="modern-card" style="display:none; border-right-color: var(--gold);">
+            <p id="bio-text" style="margin:0; font-weight: 600; font-size: 0.95rem;"></p>
+        </div>
+        
+        <div class="section-heading">
+            <h2>المستجدات والأخبار</h2>
+        </div>
+        <div id="news-container"></div>
+    </section>
+
+    <section id="sec-stars" class="page-section">
+        <div class="section-heading">
+            <h2>لوحة الشرف</h2>
+            <div style="display:flex; gap:5px;">
+                <button onclick="toggleStudentSet('current')" class="btn btn-gold" style="padding:4px 10px; font-size:0.7rem;">الأسبوع</button>
+                <button onclick="toggleStudentSet('archive')" class="btn btn-primary" style="padding:4px 10px; font-size:0.7rem;">الأرشيف</button>
+            </div>
+        </div>
+        <div id="student-container" class="student-grid"></div>
+    </section>
+
+    <section id="sec-events" class="page-section">
+        <div class="section-heading">
+            <h2>مخططاتنا ونشاطاتنا</h2>
+        </div>
+        <div id="events-container"></div>
+    </section>
+
+    <section id="sec-contact" class="page-section">
+        <div class="section-heading">
+            <h2>تواصل مع الإدارة</h2>
+        </div>
+        <div id="contacts-container"></div>
+    </section>
+
+    <section id="sec-admin" class="page-section">
+        <div class="modern-card">
+            <h3 style="margin-top:0">تخصيص الواجهة</h3>
+            <div style="display:flex; gap:12px;">
+                <div onclick="setAppTheme('default')" style="width:40px; height:40px; border-radius:50%; background:#1a535c; cursor:pointer; border:3px solid #fff; box-shadow:0 0 10px rgba(0,0,0,0.1);"></div>
+                <div onclick="setAppTheme('royal')" style="width:40px; height:40px; border-radius:50%; background:#d4af37; cursor:pointer; border:3px solid #fff; box-shadow:0 0 10px rgba(0,0,0,0.1);"></div>
+            </div>
+        </div>
+
+        <div class="modern-card">
+            <h3>منطقة الإدارة المركزية</h3>
+            <input type="password" id="auth-pass" placeholder="كلمة المرور الإدارية..." oninput="verifyAccess()">
+            
+            <div id="control-panel" style="display:none; margin-top:20px;">
+                <select id="admin-module" onchange="switchAdminModule(this.value)">
+                    <option value="news">إدارة الأخبار</option>
+                    <option value="students">إدارة المتفوقين</option>
+                    <option value="activities">إدارة النشاطات</option>
+                    <option value="contact">إدارة التواصل</option>
+                    <option value="school-info">معلومات المدرسة</option>
+                    <option value="banners">شريط الإعلانات العلوي</option>
+                </select>
+
+                <hr style="opacity:0.1; margin:20px 0;">
+
+                <div id="form-container" class="admin-form-box"></div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<nav class="tab-bar">
+    <div class="tab-item active" onclick="navTo('news', this)">
+        <svg viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12h-8v2h8v-2zm0-4h-8v2h8v-2zm0-4h-8v2h8V7z"/></svg>
+        <span>الأخبار</span>
+    </div>
+    <div class="tab-item" onclick="navTo('stars', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 8.19 8.63 1 9.24l5.46 4.73L4.82 21 12 17.27z"/></svg>
+        <span>المتفوقين</span>
+    </div>
+    <div class="tab-item" onclick="navTo('events', this)">
+        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+        <span>النشاطات</span>
+    </div>
+    <div class="tab-item" onclick="navTo('contact', this)">
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <span>تواصل</span>
+    </div>
+    <div class="tab-item" onclick="navTo('admin', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5zm7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65A.488.488 0 0 0 14.11 2h-4.22c-.23 0-.42.16-.47.38l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98 0 .33.03.66.07.97l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.05.22.24.38.47.38h4.22c.23 0 .42-.16.47-.38l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65z"/></svg>
+        <span>الإدارة</span>
+    </div>
+</nav>
+
+<div class="signature"> Élite de l'espoir</div>
+
+<script>
+    // --- Core Configuration (UPDATED TO NEW PROJECT: nokhba-f67df) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2H_WilJjXwSYzaCARjKJ8EhGKwydTQ4c",
+        authDomain: "nokhba-f67df.firebaseapp.com",
+        projectId: "nokhba-f67df",
+        storageBucket: "nokhba-f67df.firebasestorage.app",
+        messagingSenderId: "556744946498",
+        appId: "1:556744946498:web:408225e8f64b1fab954edb"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let isAdmin = false;
+    let studentSet = 'current';
+    let currentEditId = null;
+
+    // --- UI Helpers ---
+    function navTo(sec, el) {
+        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        document.getElementById('sec-' + sec).classList.add('active');
+        el.classList.add('active');
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function setAppTheme(t) {
+        document.body.className = t === 'default' ? '' : 'theme-' + t;
+    }
+
+    function verifyAccess() {
+        if(document.getElementById('auth-pass').value === 'amal2026') {
+            isAdmin = true;
+            document.getElementById('control-panel').style.display = 'block';
+            switchAdminModule('news');
+            refreshAllViews();
+        }
+    }
+
+    async function handleFile(file) {
+        if(!file) return "";
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxW = 700;
+                    const scale = maxW / img.width;
+                    canvas.width = maxW;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                }
+            }
+        });
+    }
+
+    async function saveData(collection, data) {
+        const loader = document.getElementById('global-loader');
+        loader.style.width = '40%';
+        try {
+            if(currentEditId) {
+                await db.collection(collection).doc(currentEditId).update(data);
+                alert("✅ تم التعديل بنجاح");
+            } else {
+                await db.collection(collection).add({...data, createdAt: Date.now()});
+                alert("✅ تم النشر بنجاح");
+            }
+            loader.style.width = '100%';
+            setTimeout(() => loader.style.width = '0', 400);
+            currentEditId = null;
+            switchAdminModule(document.getElementById('admin-module').value);
+        } catch(e) { alert("❌ خطأ في العملية"); }
+    }
+
+    async function deleteDoc(col, id) {
+        if(confirm("هل أنت متأكد من الحذف النهائي؟")) {
+            await db.collection(col).doc(id).delete();
+        }
+    }
+
+    function populateEdit(col, id, data) {
+        currentEditId = id;
+        switchAdminModule(document.getElementById('admin-module').value);
+        Object.keys(data).forEach(key => {
+            const el = document.getElementById('inp-' + key);
+            if(el && el.type !== 'file') el.value = data[key];
+        });
+        window.scrollTo(0, document.getElementById('form-container').offsetTop - 100);
+    }
+
+    function switchAdminModule(mod) {
+        const box = document.getElementById('form-container');
+        let html = `<h4>${currentEditId ? 'تعديل بيانات' : 'إضافة عنصر جديد'}</h4>`;
+
+        if(mod === 'news') {
+            html += `
+                <input type="text" id="inp-title" placeholder="عنوان الخبر" class="input-group">
+                <textarea id="inp-content" placeholder="محتوى الخبر..." rows="4" class="input-group"></textarea>
+                <input type="file" id="inp-file" class="input-group">
+                <button class="btn btn-primary" onclick="execNews()">حفظ الخبر</button>
+            `;
+        } else if(mod === 'students') {
+            html += `
+                <input type="text" id="inp-name" placeholder="اسم الطالب" class="input-group">
+                <input type="text" id="inp-lvl" placeholder="المستوى الدراسي" class="input-group">
+                <select id="inp-type" class="input-group">
+                    <option value="current">متفوق الأسبوع</option>
+                    <option value="archive">أرشيف</option>
+                </select>
+                <input type="file" id="inp-file" class="input-group">
+                <button class="btn btn-primary" onclick="execStudent()">حفظ الطالب</button>
+            `;
+        } else if(mod === 'activities') {
+            html += `
+                <input type="text" id="inp-title" placeholder="عنوان النشاط" class="input-group">
+                <input type="url" id="inp-link" placeholder="رابط خارجي (اختياري)" class="input-group">
+                <textarea id="inp-desc" placeholder="وصف موجز..." class="input-group"></textarea>
+                <input type="file" id="inp-file" class="input-group">
+                <button class="btn btn-primary" onclick="execActivity()">حفظ النشاط</button>
+            `;
+        } else if(mod === 'contact') {
+            html += `
+                <input type="text" id="inp-platform" placeholder="المنصة (مثال: واتساب)" class="input-group">
+                <input type="text" id="inp-val" placeholder="الرابط أو الرقم" class="input-group">
+                <button class="btn btn-primary" onclick="execContact()">حفظ وسيلة التواصل</button>
+            `;
+        } else if(mod === 'school-info') {
+            html += `
+                <textarea id="inp-bio" placeholder="نبذة عن المدرسة..." rows="5" class="input-group"></textarea>
+                <button class="btn btn-primary" onclick="execBio()">تحديث النبذة</button>
+            `;
+        } else if(mod === 'banners') {
+            html += `
+                <input type="text" id="inp-tag" placeholder="نص توضيحي قصير" class="input-group">
+                <input type="url" id="inp-url" placeholder="الرابط المرتبط بالصورة" class="input-group">
+                <input type="file" id="inp-file" class="input-group">
+                <button class="btn btn-primary" onclick="execBanner()">إضافة إعلان علوي</button>
+            `;
+        }
+        
+        if(currentEditId) html += `<button class="btn" style="background:#7f8c8d; color:#fff; margin-top:10px;" onclick="cancelEdit()">إلغاء التعديل</button>`;
+        box.innerHTML = html;
+    }
+
+    function cancelEdit() { currentEditId = null; switchAdminModule(document.getElementById('admin-module').value); }
+
+    async function execNews() {
+        const data = { title: document.getElementById('inp-title').value, content: document.getElementById('inp-content').value };
+        const file = document.getElementById('inp-file').files[0];
+        if(file) data.img = await handleFile(file);
+        saveData("school_posts", data);
+    }
+
+    async function execStudent() {
+        const data = { name: document.getElementById('inp-name').value, lvl: document.getElementById('inp-lvl').value, type: document.getElementById('inp-type').value };
+        const file = document.getElementById('inp-file').files[0];
+        if(file) data.img = await handleFile(file);
+        saveData("students", data);
+    }
+
+    async function execActivity() {
+        const data = { title: document.getElementById('inp-title').value, link: document.getElementById('inp-link').value, desc: document.getElementById('inp-desc').value };
+        const file = document.getElementById('inp-file').files[0];
+        if(file) data.img = await handleFile(file);
+        saveData("activities", data);
+    }
+
+    async function execContact() {
+        saveData("contact_info", { platform: document.getElementById('inp-platform').value, val: document.getElementById('inp-val').value });
+    }
+
+    async function execBio() {
+        await db.collection("settings").doc("main").set({ bio: document.getElementById('inp-bio').value });
+        alert("تم تحديث النبذة");
+    }
+
+    async function execBanner() {
+        const data = { tag: document.getElementById('inp-tag').value, url: document.getElementById('inp-url').value };
+        const file = document.getElementById('inp-file').files[0];
+        if(file) data.img = await handleFile(file);
+        saveData("banners", data);
+    }
+
+    function refreshAllViews() {
+        db.collection("school_posts").orderBy("createdAt", "desc").onSnapshot(snap => {
+            const cont = document.getElementById('news-container');
+            cont.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                cont.innerHTML += `
+                    <div class="modern-card">
+                        <div class="post-content">
+                            <h3>${d.title}</h3>
+                            <p>${d.content}</p>
+                            ${d.img ? `<img src="${d.img}" class="post-image">` : ''}
+                        </div>
+                        ${isAdmin ? `<div class="admin-actions">
+                            <button class="btn btn-edit" onclick="populateEdit('news','${doc.id}', ${JSON.stringify(d).replace(/"/g, '&quot;')})">تعديل</button>
+                            <button class="btn btn-danger" onclick="deleteDoc('school_posts','${doc.id}')">حذف</button>
+                        </div>` : ''}
+                    </div>
+                `;
+            });
+        });
+
+        toggleStudentSet('current');
+
+        db.collection("activities").onSnapshot(snap => {
+            const cont = document.getElementById('events-container');
+            cont.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                cont.innerHTML += `
+                    <div class="modern-card" onclick="${d.link ? `window.open('${d.link}')` : ''}" style="cursor:pointer">
+                        <div style="display:flex; gap:15px; align-items:center;">
+                            ${d.img ? `<img src="${d.img}" style="width:80px; height:80px; border-radius:10px; object-fit:cover;">` : ''}
+                            <div>
+                                <h4 style="margin:0">${d.title}</h4>
+                                <p style="margin:5px 0; font-size:0.8rem; color:var(--text-gray)">${d.desc}</p>
+                            </div>
+                        </div>
+                        ${isAdmin ? `<div class="admin-actions">
+                             <button class="btn btn-edit" onclick="event.stopPropagation(); populateEdit('activities','${doc.id}', ${JSON.stringify(d).replace(/"/g, '&quot;')})">تعديل</button>
+                            <button class="btn btn-danger" onclick="event.stopPropagation(); deleteDoc('activities','${doc.id}')">حذف</button>
+                        </div>` : ''}
+                    </div>
+                `;
+            });
+        });
+
+        db.collection("banners").onSnapshot(snap => {
+            const cont = document.getElementById('ad-carousel');
+            cont.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                cont.innerHTML += `
+                    <div class="ad-item" onclick="window.open('${d.url}')">
+                        <img src="${d.img}">
+                        <div class="ad-overlay">${d.tag}</div>
+                        ${isAdmin ? `<button class="btn-danger" style="position:absolute; top:0; left:0; padding:2px 8px; border-radius:0 0 10px 0;" onclick="event.stopPropagation(); deleteDoc('banners','${doc.id}')">X</button>` : ''}
+                    </div>
+                `;
+            });
+        });
+
+        db.collection("contact_info").onSnapshot(snap => {
+            const cont = document.getElementById('contacts-container');
+            cont.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                cont.innerHTML += `
+                    <div class="modern-card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="color:var(--primary); font-weight:900;">${d.platform}: </span>
+                            <span style="font-size:0.9rem;">${d.val}</span>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-gold" style="width:auto; padding:5px 15px;" onclick="window.open('${d.val}')">فتح</button>
+                            ${isAdmin ? `<button class="btn btn-danger" style="width:auto;" onclick="deleteDoc('contact_info','${doc.id}')">حذف</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        db.collection("settings").doc("main").onSnapshot(doc => {
+            if(doc.exists) {
+                document.getElementById('bio-text').innerText = doc.data().bio;
+                document.getElementById('info-board').style.display = doc.data().bio ? "block" : "none";
+                if(isAdmin) document.getElementById('inp-bio').value = doc.data().bio;
+            }
+        });
+    }
+
+    function toggleStudentSet(type) {
+        studentSet = type;
+        db.collection("students").where("type", "==", type).onSnapshot(snap => {
+            const cont = document.getElementById('student-container');
+            cont.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                cont.innerHTML += `
+                    <div class="student-profile">
+                        <img src="${d.img}" class="profile-img">
+                        <span class="student-name">${d.name}</span>
+                        <span class="student-lvl">${d.lvl}</span>
+                        ${isAdmin ? `<div class="admin-actions">
+                            <button class="btn btn-danger" onclick="deleteDoc('students','${doc.id}')">حذف</button>
+                        </div>` : ''}
+                    </div>
+                `;
+            });
+        });
+    }
+
+    window.onload = refreshAllViews;
+</script>
+
+</body>
+</html>
